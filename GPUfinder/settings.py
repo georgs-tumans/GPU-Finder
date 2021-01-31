@@ -11,13 +11,14 @@ BOT_NAME = 'GPUfinder'
 
 SPIDER_MODULES = ['GPUfinder.spiders']
 NEWSPIDER_MODULE = 'GPUfinder.spiders'
+HTTPERROR_ALLOWED_CODES=[404]
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'GPUfinder (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
