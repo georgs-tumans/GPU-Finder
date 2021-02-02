@@ -11,7 +11,7 @@ BOT_NAME = 'GPUfinder'
 
 SPIDER_MODULES = ['GPUfinder.spiders']
 NEWSPIDER_MODULE = 'GPUfinder.spiders'
-HTTPERROR_ALLOWED_CODES=[404]
+HTTPERROR_ALLOWED_CODES=[404, 400]
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -65,6 +65,7 @@ ROBOTSTXT_OBEY = False
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 #ITEM_PIPELINES = {
 #    'GPUfinder.pipelines.GpufinderPipeline': 300,
+#    'GPUfinder.pipelines.EndPipeline': 400
 #}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
