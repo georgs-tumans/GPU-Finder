@@ -21,7 +21,7 @@ class GpuFinder(scrapy.Spider):
         cfg = yaml.load(ymlfile)
     
     name = "gpus"       #spider name
-    product = str(cfg['product'])    #product we will be looking for
+    product = cfg['product']    #product we will be looking for
     port = cfg['port']  # For SSL
     password = cfg['password']
     smtp_server = cfg['smtp_server']
@@ -66,11 +66,14 @@ class GpuFinder(scrapy.Spider):
         self.log("Script start", 1)
         urls = [
             'https://www.rdveikals.lv/search/lv/word/rx+5700/page/1/filters/437_0_0/',
+            "https://www.rdveikals.lv/search/lv/word/rx+5600/page/1/",
             #test in  stock-> "https://www.rdveikals.lv/search/lv/word/580/page/1/",
             'https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*',
+            "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205600&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             #->test in stock "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%20580&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*"
             #->error case "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=77&facets.0=attr_*"
-            "https://www.dateks.lv/meklet?q=rx%205700"
+            "https://www.dateks.lv/meklet?q=rx%205700",
+            "https://www.dateks.lv/meklet?q=rx%205600"
             
         ]
         for url in urls:
@@ -78,7 +81,6 @@ class GpuFinder(scrapy.Spider):
 
     #katram norādītajam urlim izpildīsies šī f-ja
     def parse(self, response):
-        #self.processDateks(response)
         if "rdveikals" in str(response.url):
             self.processRDVeikals(response)
         elif "searchnode" in str(response.url):
@@ -120,15 +122,16 @@ class GpuFinder(scrapy.Spider):
         for el in resListElements:
             try:
                prodInfo=str(el.find('div', 'product__info').find('a').text).strip()
-               #meklēšanas rezultāti satur vajadzīgo preci  - izvelkam saiti, cenu un sūtam epastu ar info:
-               if self.product in prodInfo:
-                   print("Found the product!")
-                   found=True
-                   link=str(el.find('div', 'product__info').find('a')['href']).strip()
-                   link="https://www.rdveikals.lv/"+link
-                   price=str(el.find('div', 'product__info').find('p').text).strip()
-                   msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
-                   self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
+               for prod in self.product:
+                #meklēšanas rezultāti satur vajadzīgo preci  - izvelkam saiti, cenu un sūtam epastu ar info:
+                if prod in prodInfo:
+                    print("Found the product!")
+                    found=True
+                    link=str(el.find('div', 'product__info').find('a')['href']).strip()
+                    link="https://www.rdveikals.lv/"+link
+                    price=str(el.find('div', 'product__info').find('p').text).strip()
+                    msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
+                    self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                    
                print(prodInfo)
 
@@ -165,15 +168,16 @@ class GpuFinder(scrapy.Spider):
         for r in results:
             try:
                 title=r["title"]
-                #specifiska atlase, jo 1A pārdod cooling produktus konkrētajai videokartei, kas nav vajadzīgi
-                if self.product in title and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True:
-                    url=r["url"]
-                    url="https://www.1a.lv"+url
-                    price=r["priceDefault"]
-                    print(title + " " + str(price) + " " + url)
-                    self.log("Found the product " + title + " for " + str(price) + ". Available: " + url + ". Sending email..")
-                    msgText=msgText + title + "\nSaite: "+ url + "\nCena: " + str(price) + "\n\n"   
-                    found=True
+                for prod in self.product:
+                    #specifiska atlase, jo 1A pārdod cooling produktus konkrētajai videokartei, kas nav vajadzīgi
+                    if prod in title and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True:
+                        url=r["url"]
+                        url="https://www.1a.lv"+url
+                        price=r["priceDefault"]
+                        print(title + " " + str(price) + " " + url)
+                        self.log("Found the product " + title + " for " + str(price) + ". Available: " + url + ". Sending email..")
+                        msgText=msgText + title + "\nSaite: "+ url + "\nCena: " + str(price) + "\n\n"   
+                        found=True
                 print(title)
 
             except Exception as e:
@@ -209,14 +213,15 @@ class GpuFinder(scrapy.Spider):
         for el in resListElements:
             try:
                 prodInfo=str(el.find('div', 'name').text).strip()
-                if self.product in prodInfo and "water" not in prodInfo.lower():
-                   print("Found the product!")
-                   found=True
-                   link=str(el.find('div', 'top').find('a')['href']).strip()
-                   link="https://www.dateks.lv"+link
-                   price=str(el.find('div', 'mid').find('div', 'price').text).strip()
-                   msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
-                   self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
+                for prod in self.product:
+                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower():
+                        print("Found " + prod)
+                        found=True
+                        link=str(el.find('div', 'top').find('a')['href']).strip()
+                        link="https://www.dateks.lv"+link
+                        price=str(el.find('div', 'mid').find('div', 'price').text).strip()
+                        msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
+                        self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                     
                 print(prodInfo)
 
