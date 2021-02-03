@@ -14,11 +14,8 @@ import pprint
 # 1. Add other websites
 
 
-
 class GpuFinder(scrapy.Spider):
 
-    def __init__(self):
-        None
 
     with open(Path(__file__).parent / "../config.yaml", 'r') as ymlfile:
         cfg = yaml.load(ymlfile)
@@ -70,19 +67,24 @@ class GpuFinder(scrapy.Spider):
         urls = [
             'https://www.rdveikals.lv/search/lv/word/rx+5700/page/1/filters/437_0_0/',
             #test in  stock-> "https://www.rdveikals.lv/search/lv/word/580/page/1/",
-            'https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*'
+            'https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*',
             #->test in stock "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%20580&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*"
             #->error case "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=77&facets.0=attr_*"
+            "https://www.dateks.lv/meklet?q=rx%205700"
+            
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)    
 
     #katram norādītajam urlim izpildīsies šī f-ja
     def parse(self, response):
+        #self.processDateks(response)
         if "rdveikals" in str(response.url):
             self.processRDVeikals(response)
         elif "searchnode" in str(response.url):
             self.process1A(response)
+        elif "dateks" in str(response.url):
+            self.processDateks(response)
         return
         
     
@@ -183,8 +185,46 @@ class GpuFinder(scrapy.Spider):
         else:
             self.SendEmail(msgText, 0)
 
-            
-               
+        
+    def processDateks(self, response):
+        responseData=str(response.text)
+        self.log("Processing Dateks")
+        try:
+            soup = BeautifulSoup(str(responseData), 'html.parser')
+        except Exception as e:
+            print("Error parsing the page")
+            self.log("Error parsing the page: " + str(e))
 
+        try:
+            results = soup.find('div', 'page')
+            resListElements = results.find_all('div', 'prod')
+        except Exception as e:
+            print("Failed to parse the search results")
+            self.log("Failed to parse the search results" + str(e))
 
+        
+        found=False
+        msgText="Veikalā Dateks tika atrastas sekojošas preces:\n\n"
 
+        for el in resListElements:
+            try:
+                prodInfo=str(el.find('div', 'name').text).strip()
+                if self.product in prodInfo and "water" not in prodInfo.lower():
+                   print("Found the product!")
+                   found=True
+                   link=str(el.find('div', 'top').find('a')['href']).strip()
+                   link="https://www.dateks.lv"+link
+                   price=str(el.find('div', 'mid').find('div', 'price').text).strip()
+                   msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
+                   self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
+                    
+                print(prodInfo)
+
+            except Exception as e:
+                self.log("Failed to process a search result: " + str(e))
+                pass
+
+        if found == False:
+            self.log("Didn't find the product")
+        else:
+            self.SendEmail(msgText, 0)
