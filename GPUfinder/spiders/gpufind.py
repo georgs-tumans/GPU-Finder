@@ -213,11 +213,11 @@ class GpuFinder(scrapy.Spider):
         for el in resListElements:
             try:
                 prodInfo=str(el.find('div', 'name').text).strip()
+                link=str(el.find('div', 'top').find('a')['href']).strip()
                 for prod in self.product:
-                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower():
+                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower():
                         print("Found " + prod)
                         found=True
-                        link=str(el.find('div', 'top').find('a')['href']).strip()
                         link="https://www.dateks.lv"+link
                         price=str(el.find('div', 'mid').find('div', 'price').text).strip()
                         msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
