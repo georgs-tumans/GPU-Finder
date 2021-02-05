@@ -72,7 +72,8 @@ class GpuFinder(scrapy.Spider):
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205600&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             #->test in stock "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%20580&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*"
             #->error case "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=77&facets.0=attr_*"
-            "https://www.dateks.lv/cenas/videokartes",
+            "https://www.dateks.lv/meklet?q=rx%205700",
+            "https://www.dateks.lv/meklet?q=rx%205600",
             "https://220.lv/lv/datortehnika/datoru-komponentes/videokartes-gpu"
             
         ]
