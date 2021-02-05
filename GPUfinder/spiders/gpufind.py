@@ -72,8 +72,8 @@ class GpuFinder(scrapy.Spider):
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205600&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             #->test in stock "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%20580&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*"
             #->error case "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=77&facets.0=attr_*"
-            "https://www.dateks.lv/meklet?q=rx%205700",
-            "https://www.dateks.lv/meklet?q=rx%205600"
+            "https://www.dateks.lv/cenas/videokartes",
+            "https://220.lv/lv/datortehnika/datoru-komponentes/videokartes-gpu"
             
         ]
         for url in urls:
@@ -87,6 +87,8 @@ class GpuFinder(scrapy.Spider):
             self.process1A(response)
         elif "dateks" in str(response.url):
             self.processDateks(response)
+        elif "220" in str(response.url):
+            self.process220(response)
         return
         
     
@@ -220,6 +222,50 @@ class GpuFinder(scrapy.Spider):
                         found=True
                         link="https://www.dateks.lv"+link
                         price=str(el.find('div', 'mid').find('div', 'price').text).strip()
+                        msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
+                        self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
+                    
+                print(prodInfo)
+
+            except Exception as e:
+                self.log("Failed to process a search result: " + str(e))
+                pass
+
+        if found == False:
+            self.log("Didn't find the product")
+        else:
+            self.SendEmail(msgText, 0)
+
+    def process220(self, response):
+        responseData=str(response.text)
+        self.log("Processing 220.lv")
+        try:
+            soup = BeautifulSoup(str(responseData), 'html.parser')
+        except Exception as e:
+            print("Error parsing the page")
+            self.log("Error parsing the page: " + str(e))
+
+        try:
+            results = soup.find('div', {"id": "productListLoader"})
+            resListElements = results.find_all('div', 'product-list-item')
+        except Exception as e:
+            print("Failed to parse the search results")
+            self.log("Failed to parse the search results" + str(e))
+
+        
+        found=False
+        msgText="Veikalā 220.lv tika atrastas sekojošas preces:\n\n"
+
+        for el in resListElements:
+            try:
+                prodInfo=str(el.find('p', 'product-name').text).strip()
+                available=el.find('span', 'label-soldout')
+                for prod in self.product:
+                    if prod in prodInfo and available == None:
+                        print("Found " + prod)
+                        found=True
+                        link=str(el.find('p', 'product-name').find('a')['href']).strip()
+                        price=str(el.find('div', 'product-price').find('span', 'price notranslate').text).strip()
                         msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
                         self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                     
