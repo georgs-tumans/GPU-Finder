@@ -67,14 +67,13 @@ class GpuFinder(scrapy.Spider):
         urls = [
             'https://www.rdveikals.lv/search/lv/word/rx+5700/page/1/filters/437_0_0/',
             "https://www.rdveikals.lv/search/lv/word/rx+5600/page/1/",
-            #test in  stock-> "https://www.rdveikals.lv/search/lv/word/580/page/1/",
             'https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*',
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205600&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
-            #->test in stock "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%20580&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*"
-            #->error case "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=77&facets.0=attr_*"
             "https://www.dateks.lv/meklet?q=rx%205700",
             "https://www.dateks.lv/meklet?q=rx%205600",
-            "https://220.lv/lv/datortehnika/datoru-komponentes/videokartes-gpu"
+            "https://220.lv/lv/datortehnika/datoru-komponentes/videokartes-gpu",
+            "https://oreol.eu/search/?search=5700%20xt&description=true"
+            
             
         ]
         for url in urls:
@@ -90,6 +89,8 @@ class GpuFinder(scrapy.Spider):
             self.processDateks(response)
         elif "220" in str(response.url):
             self.process220(response)
+        elif "oreol" in str(response.url):
+            self.processOreol(response)
         return
         
     
@@ -271,6 +272,51 @@ class GpuFinder(scrapy.Spider):
                         self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                     
                 print(prodInfo)
+
+            except Exception as e:
+                self.log("Failed to process a search result: " + str(e))
+                pass
+
+        if found == False:
+            self.log("Didn't find the product")
+        else:
+            self.SendEmail(msgText, 0)
+
+    
+    def processOreol(self, response):
+        responseData=str(response.text)
+        self.log("Processing oreol.eu")
+        try:
+            soup = BeautifulSoup(str(responseData), 'html.parser')
+        except Exception as e:
+            print("Error parsing the page")
+            self.log("Error parsing the page: " + str(e))
+
+        try:
+            resListElements = soup.find_all('div', 'product-layout')
+            if resListElements == None or resListElements==[]:
+                self.log('No search results')
+                return
+        except Exception as e:
+            print("Failed to parse the search results")
+            self.log("Failed to parse the search results" + str(e))
+        
+        found=False
+        msgText="Veikalā oreol.eu tika atrastas sekojošas preces:\n\n"
+
+        for el in resListElements:
+            try:
+                prodInfo=str(el.find('div', 'caption').find('a').text).strip()
+                price=int(str(el.find('div', 'caption').find('p', 'price').text).strip()[:-4].replace(" ", ""))
+                for prod in self.product:
+                    if prod in prodInfo and "microsd" not in prodInfo.lower() and price <= 650 :
+                        print("Found " + prod)
+                        found=True
+                        link=str(el.find('div', 'caption').find('a')['href']).strip()
+                        msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
+                        self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
+                    
+                print(prodInfo + ' ' + str(price))
 
             except Exception as e:
                 self.log("Failed to process a search result: " + str(e))
