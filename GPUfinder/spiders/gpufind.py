@@ -80,7 +80,12 @@ class GpuFinder(scrapy.Spider):
             "https://220.lv/lv/datortehnika/datoru-komponentes/videokartes-gpu",
             "https://oreol.eu/search/?search=5700%20xt&description=true",
             "https://oreol.eu/search/?search=rtx%203060&description=true",
-            "https://oreol.eu/search/?search=rx%206700&description=true"  
+            "https://oreol.eu/search/?search=rx%206700&description=true",
+            "https://www.balticdata.lv/lv/datoru-komponentes/videokartes",
+            "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/2",
+            "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/3",
+            "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/4",
+            "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/5"
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)    
@@ -97,6 +102,8 @@ class GpuFinder(scrapy.Spider):
             self.process220(response)
         elif "oreol" in str(response.url):
             self.processOreol(response)
+        elif "balticdata" in str(response.url):
+            self.processBalticdata(response)
         return
         
     
@@ -322,6 +329,51 @@ class GpuFinder(scrapy.Spider):
                         msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
                         self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
                     
+                print(prodInfo + ' ' + str(price))
+
+            except Exception as e:
+                self.log("Failed to process a search result: " + str(e))
+                pass
+
+        if found == False:
+            self.log("Didn't find the product")
+        else:
+            self.SendEmail(msgText, 0)
+
+    def processBalticdata(self, response):
+        responseData=str(response.text)
+        self.log("Processing balticdata")
+        try:
+            soup = BeautifulSoup(str(responseData), 'html.parser')
+        except Exception as e:
+            print("Error parsing the page")
+            self.log("Error parsing the page: " + str(e))
+
+        try:
+            resListElements = soup.find_all('div', 'EBI4ProductObjectPlate')
+            if resListElements == None or resListElements==[]:
+                self.log('No search results')
+                return
+        except Exception as e:
+            print("Failed to parse the search results")
+            self.log("Failed to parse the search results" + str(e))
+        
+        found=False
+        msgText="Veikalā balticdata tika atrastas sekojošas preces:\n\n"
+
+        for el in resListElements:
+            try:
+                prodInfo=str(el.find('div', 'EBI4ProductObjectPlateTitle').find('a').text).strip()
+                price=str(el.find('div', 'EBI4ProductObjectPlatePrices').find('div', 'EBI4ProductObjectPlatePriceSale').text).strip()
+                availability=str(el.find('div', 'EBI4ProductObjectButtonCompare').find('a').text).strip().lower()
+                for prod in self.product:
+                    if prod in prodInfo and availability != "prece nav noliktavā":
+                        print("Found " + prod)
+                        found=True
+                        link=str(el.find('div', 'EBI4ProductObjectPlateTitle').find('a')['href']).strip()
+                        link="https://www.balticdata.lv"+link
+                        msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
+                        self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
                 print(prodInfo + ' ' + str(price))
 
             except Exception as e:
