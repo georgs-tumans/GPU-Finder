@@ -67,14 +67,20 @@ class GpuFinder(scrapy.Spider):
         urls = [
             'https://www.rdveikals.lv/search/lv/word/rx+5700/page/1/filters/437_0_0/',
             "https://www.rdveikals.lv/search/lv/word/rx+5600/page/1/",
+            "https://www.rdveikals.lv/search/lv/word/rtx+3060/page/1/",
+            "https://www.rdveikals.lv/search/lv/word/rx+6700/page/1/",
             'https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*',
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205600&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
+            "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rtx%203060&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
+            "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%206700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             "https://www.dateks.lv/meklet?q=rx%205700",
             "https://www.dateks.lv/meklet?q=rx%205600",
+            "https://www.dateks.lv/meklet?q=rtx%203060",
+            "https://www.dateks.lv/meklet?q=rx%206700",
             "https://220.lv/lv/datortehnika/datoru-komponentes/videokartes-gpu",
-            "https://oreol.eu/search/?search=5700%20xt&description=true"
-            
-            
+            "https://oreol.eu/search/?search=5700%20xt&description=true",
+            "https://oreol.eu/search/?search=rtx%203060&description=true",
+            "https://oreol.eu/search/?search=rx%206700&description=true"  
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)    
@@ -219,7 +225,7 @@ class GpuFinder(scrapy.Spider):
                 prodInfo=str(el.find('div', 'name').text).strip()
                 link=str(el.find('div', 'top').find('a')['href']).strip()
                 for prod in self.product:
-                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower():
+                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower():
                         print("Found " + prod)
                         found=True
                         link="https://www.dateks.lv"+link
