@@ -35,7 +35,7 @@ class GpuFinder(scrapy.Spider):
         if type==0:  
             message["Subject"] = "Prece ir atrasta"
         else:
-            message["Subject"] = "Notikusi kļūda"
+            message["Subject"] = "Kļūda"
         message["From"] = self.sender_email
         message["To"] = self.receiver_email
         message.attach(MIMEText(msgText, "plain"))
@@ -49,13 +49,25 @@ class GpuFinder(scrapy.Spider):
         except Exception as e:
             self.log("Failed to send an email: " + str(e))
 
-    def log(self, content, newRun=0): 
+    def log(self, content, newRun=0, isError=0): 
         todayDate=str(date.today().strftime("%Y.%m.%d"))
         currentTime=str(datetime.now().strftime("%H:%M:%S"))
         with open("GPUfinder/logs/" + todayDate + "-log.txt", "a", encoding="utf-8") as fout:
             if newRun==1:
                 fout.write("\n\n")
             fout.write(currentTime +"  " + content + "\n")
+        if isError==1:
+            with open("GPUfinder/logs/errorcountlog.txt", "r+", encoding="utf-8") as fout:
+                count=int(fout.read())
+                count = count+1
+                fout.seek(0)
+                if count>10:
+                    fout.write(str(0))
+                    self.SendEmail("Programmas darbībā konstatēts liels skaits kļūdu, vērts pārbaudīt logus!", 1)
+                else:
+                    fout.write(str(count))
+                fout.truncate()
+                
         
 
 
@@ -114,7 +126,7 @@ class GpuFinder(scrapy.Spider):
             soup = BeautifulSoup(str(responseData), 'html.parser')
         except Exception as e:
             print("Error parsing the page")
-            self.log("Error parsing the page: " + str(e))
+            self.log(content="Error parsing the page: " + str(e), isError=1)
 
         try:
             results = soup.find('ul', 'product-list product-list--grid product-list--with-overlay row row--pad block-top block-none-bottom')
@@ -130,7 +142,7 @@ class GpuFinder(scrapy.Spider):
                     return
         except Exception as e:
             print("Could not find the result 'ul'")
-            self.log("Could not find the result 'ul': " + str(e))
+            self.log(content="Could not find the result 'ul': " + str(e), isError=1)
 
         resListElements = results.find_all('li')
         found=False
@@ -153,7 +165,7 @@ class GpuFinder(scrapy.Spider):
                print(prodInfo)
 
             except Exception as e:
-                self.log("Failed to process a search result: " + str(e))
+                self.log(content="Failed to process a search result: " + str(e), isError=1)
                 pass
 
         if found == False:
@@ -168,7 +180,7 @@ class GpuFinder(scrapy.Spider):
         try:
             data = json.loads(response.body)
         except Exception as e:
-            self.log("Failed to parse json: " + str(e))
+            self.log(content="Failed to parse json: " + str(e), isError=1)
             return
 
         if "error" in data:
@@ -198,7 +210,7 @@ class GpuFinder(scrapy.Spider):
                 print(title)
 
             except Exception as e:
-                self.log("Failed to process a search result: " + str(e))
+                self.log(content="Failed to process a search result: " + str(e), isError=1)
                 pass
 
         if found == False:
@@ -214,14 +226,14 @@ class GpuFinder(scrapy.Spider):
             soup = BeautifulSoup(str(responseData), 'html.parser')
         except Exception as e:
             print("Error parsing the page")
-            self.log("Error parsing the page: " + str(e))
+            self.log(content="Error parsing the page: " + str(e), isError=1)
 
         try:
             results = soup.find('div', 'page')
             resListElements = results.find_all('div', 'prod')
         except Exception as e:
             print("Failed to parse the search results")
-            self.log("Failed to parse the search results" + str(e))
+            self.log(content="Failed to parse the search results" + str(e), isError=1)
 
         
         found=False
@@ -243,7 +255,7 @@ class GpuFinder(scrapy.Spider):
                 print(prodInfo)
 
             except Exception as e:
-                self.log("Failed to process a search result: " + str(e))
+                self.log(content="Failed to process a search result: " + str(e), isError=1)
                 pass
 
         if found == False:
@@ -258,14 +270,14 @@ class GpuFinder(scrapy.Spider):
             soup = BeautifulSoup(str(responseData), 'html.parser')
         except Exception as e:
             print("Error parsing the page")
-            self.log("Error parsing the page: " + str(e))
+            self.log(content="Error parsing the page: " + str(e), isError=1)
 
         try:
             results = soup.find('div', {"id": "productListLoader"})
             resListElements = results.find_all('div', 'product-list-item')
         except Exception as e:
             print("Failed to parse the search results")
-            self.log("Failed to parse the search results" + str(e))
+            self.log(content="Failed to parse the search results" + str(e), isError=1)
 
         
         found=False
@@ -287,7 +299,7 @@ class GpuFinder(scrapy.Spider):
                 print(prodInfo)
 
             except Exception as e:
-                self.log("Failed to process a search result: " + str(e))
+                self.log(content="Failed to process a search result: " + str(e), isError=1)
                 pass
 
         if found == False:
@@ -303,7 +315,7 @@ class GpuFinder(scrapy.Spider):
             soup = BeautifulSoup(str(responseData), 'html.parser')
         except Exception as e:
             print("Error parsing the page")
-            self.log("Error parsing the page: " + str(e))
+            self.log(content="Error parsing the page: " + str(e), isError=1)
 
         try:
             resListElements = soup.find_all('div', 'product-layout')
@@ -312,7 +324,7 @@ class GpuFinder(scrapy.Spider):
                 return
         except Exception as e:
             print("Failed to parse the search results")
-            self.log("Failed to parse the search results" + str(e))
+            self.log(content="Failed to parse the search results" + str(e), isError=1)
         
         found=False
         msgText="Veikalā oreol.eu tika atrastas sekojošas preces:\n\n"
@@ -332,7 +344,7 @@ class GpuFinder(scrapy.Spider):
                 print(prodInfo + ' ' + str(price))
 
             except Exception as e:
-                self.log("Failed to process a search result: " + str(e))
+                self.log(content="Failed to process a search result: " + str(e), isError=1)
                 pass
 
         if found == False:
@@ -347,7 +359,7 @@ class GpuFinder(scrapy.Spider):
             soup = BeautifulSoup(str(responseData), 'html.parser')
         except Exception as e:
             print("Error parsing the page")
-            self.log("Error parsing the page: " + str(e))
+            self.log(content="Error parsing the page: " + str(e), isError=1)
 
         try:
             resListElements = soup.find_all('div', 'EBI4ProductObjectPlate')
@@ -356,7 +368,7 @@ class GpuFinder(scrapy.Spider):
                 return
         except Exception as e:
             print("Failed to parse the search results")
-            self.log("Failed to parse the search results" + str(e))
+            self.log(content="Failed to parse the search results" + str(e),  isError=1)
         
         found=False
         msgText="Veikalā balticdata tika atrastas sekojošas preces:\n\n"
@@ -377,7 +389,7 @@ class GpuFinder(scrapy.Spider):
                 print(prodInfo + ' ' + str(price))
 
             except Exception as e:
-                self.log("Failed to process a search result: " + str(e))
+                self.log(content="Failed to process a search result: " + str(e), isError=1)
                 pass
 
         if found == False:
