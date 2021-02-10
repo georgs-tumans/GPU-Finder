@@ -9,6 +9,7 @@ from datetime import date
 from datetime import datetime
 import json
 import pprint
+import re
 
 #ToDO
 # 1. Add other websites
@@ -27,6 +28,7 @@ class GpuFinder(scrapy.Spider):
     smtp_server = cfg['smtp_server']
     sender_email = cfg['sender_email']
     receiver_email = cfg['receiver_email']
+    max_price = cfg['max_price']
 
 #########################################  Utilieties #######################################################
     def SendEmail(self, msgText, type=0):   #type=0 - informācija par atrastu preci/type=1 - info par kļūdām
@@ -162,7 +164,7 @@ class GpuFinder(scrapy.Spider):
                     msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
                     self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                    
-               print(prodInfo)
+               #print(prodInfo)
 
             except Exception as e:
                 self.log(content="Failed to process a search result: " + str(e), isError=1)
@@ -207,7 +209,7 @@ class GpuFinder(scrapy.Spider):
                         self.log("Found the product " + title + " for " + str(price) + ". Available: " + url + ". Sending email..")
                         msgText=msgText + title + "\nSaite: "+ url + "\nCena: " + str(price) + "\n\n"   
                         found=True
-                print(title)
+                #print(title)
 
             except Exception as e:
                 self.log(content="Failed to process a search result: " + str(e), isError=1)
@@ -238,21 +240,22 @@ class GpuFinder(scrapy.Spider):
         
         found=False
         msgText="Veikalā Dateks tika atrastas sekojošas preces:\n\n"
+        pattern = re.compile(r'\s+')
 
         for el in resListElements:
             try:
                 prodInfo=str(el.find('div', 'name').text).strip()
                 link=str(el.find('div', 'top').find('a')['href']).strip()
+                price=re.sub(pattern, '',str(el.find('div', 'mid').find('div', 'price').text).strip()[:-5])
                 for prod in self.product:
-                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower():
+                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower() and int(price)<self.max_price:
                         print("Found " + prod)
                         found=True
                         link="https://www.dateks.lv"+link
-                        price=str(el.find('div', 'mid').find('div', 'price').text).strip()
                         msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
                         self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                     
-                print(prodInfo)
+                #print(prodInfo)
 
             except Exception as e:
                 self.log(content="Failed to process a search result: " + str(e), isError=1)
@@ -296,7 +299,7 @@ class GpuFinder(scrapy.Spider):
                         msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
                         self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                     
-                print(prodInfo)
+                #print(prodInfo)
 
             except Exception as e:
                 self.log(content="Failed to process a search result: " + str(e), isError=1)
@@ -341,7 +344,7 @@ class GpuFinder(scrapy.Spider):
                         msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
                         self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
                     
-                print(prodInfo + ' ' + str(price))
+                #print(prodInfo + ' ' + str(price))
 
             except Exception as e:
                 self.log(content="Failed to process a search result: " + str(e), isError=1)
@@ -386,7 +389,7 @@ class GpuFinder(scrapy.Spider):
                         link="https://www.balticdata.lv"+link
                         msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
                         self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
-                print(prodInfo + ' ' + str(price))
+                #print(prodInfo + ' ' + str(price))
 
             except Exception as e:
                 self.log(content="Failed to process a search result: " + str(e), isError=1)
