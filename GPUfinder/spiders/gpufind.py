@@ -131,7 +131,7 @@ class GpuFinder(scrapy.Spider):
             self.log(content="Error parsing the page: " + str(e), isError=1)
 
         try:
-            results = soup.find('ul', 'product-list product-list--grid product-list--with-overlay row row--pad block-top block-none-bottom')
+            results = soup.find('div', {"id": "main_container_wrapper"}).find('ul', 'product-list')
             if results == None:
                 notFound=soup.find('div',  'search__empty js-search-result-empty')
                 if notFound!=None:
@@ -146,25 +146,25 @@ class GpuFinder(scrapy.Spider):
             print("Could not find the result 'ul'")
             self.log(content="Could not find the result 'ul': " + str(e), isError=1)
 
-        resListElements = results.find_all('li')
+        resListElements = results.find_all('div', 'product__info')
         found=False
         msgText="Veikalā RD Electronics tika atrastas sekojošas preces:\n\n"
 
         for el in resListElements:
             try:
-               prodInfo=str(el.find('div', 'product__info').find('a').text).strip()
-               for prod in self.product:
-                #meklēšanas rezultāti satur vajadzīgo preci  - izvelkam saiti, cenu un sūtam epastu ar info:
-                if prod in prodInfo:
-                    print("Found the product!")
-                    found=True
-                    link=str(el.find('div', 'product__info').find('a')['href']).strip()
-                    link="https://www.rdveikals.lv/"+link
-                    price=str(el.find('div', 'product__info').find('p').text).strip()
-                    msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
-                    self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
+                prodInfo=str(el.find('div', 'product__info__part').find('h3', 'product__title').find('a').text).strip()
+                link=str(el.find('div', 'product__info__part').find('h3', 'product__title').find('a')['href']).strip()
+                link="https://www.rdveikals.lv/"+link
+                price=str(el.find('p', 'price').text).strip()
+                for prod in self.product:
+                    #meklēšanas rezultāti satur vajadzīgo preci  - izvelkam saiti, cenu un sūtam epastu ar info:
+                    if prod in prodInfo and "portatīvais" not in link.lower():
+                        print("Found the product!")
+                        found=True
+                        msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
+                        self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                    
-               #print(prodInfo)
+                print(prodInfo + ' ' + price + ' ' + link)
 
             except Exception as e:
                 self.log(content="Failed to process a search result: " + str(e), isError=1)
