@@ -248,12 +248,15 @@ class GpuFinder(scrapy.Spider):
                 link=str(el.find('div', 'top').find('a')['href']).strip()
                 price=re.sub(pattern, '',str(el.find('div', 'mid').find('div', 'price').text).strip()[:-5])
                 for prod in self.product:
-                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower() and int(price)<self.max_price:
-                        print("Found " + prod)
-                        found=True
-                        link="https://www.dateks.lv"+link
-                        msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
-                        self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
+                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower():
+                        if int(price)>self.max_price:
+                            self.log("Too expensive: " + prodInfo + " for " + str(price))
+                        else:
+                            print("Found " + prod)
+                            found=True
+                            link="https://www.dateks.lv"+link
+                            msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
+                            self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                     
                 #print(prodInfo)
 
@@ -337,12 +340,15 @@ class GpuFinder(scrapy.Spider):
                 prodInfo=str(el.find('div', 'caption').find('a').text).strip()
                 price=int(str(el.find('div', 'caption').find('p', 'price').text).strip()[:-4].replace(" ", ""))
                 for prod in self.product:
-                    if prod in prodInfo and "microsd" not in prodInfo.lower() and price <= 650 :
-                        print("Found " + prod)
-                        found=True
-                        link=str(el.find('div', 'caption').find('a')['href']).strip()
-                        msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
-                        self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
+                    if prod in prodInfo and "microsd" not in prodInfo.lower():
+                        if price > self.max_price:
+                            self.log("Too expensive: " + prodInfo + " for " + str(price))
+                        else:
+                            print("Found " + prod)
+                            found=True
+                            link=str(el.find('div', 'caption').find('a')['href']).strip()
+                            msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
+                            self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
                     
                 #print(prodInfo + ' ' + str(price))
 
