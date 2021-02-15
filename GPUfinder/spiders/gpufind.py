@@ -385,16 +385,19 @@ class GpuFinder(scrapy.Spider):
         for el in resListElements:
             try:
                 prodInfo=str(el.find('div', 'EBI4ProductObjectPlateTitle').find('a').text).strip()
-                price=str(el.find('div', 'EBI4ProductObjectPlatePrices').find('div', 'EBI4ProductObjectPlatePriceSale').text).strip()
+                price=int(str(el.find('div', 'EBI4ProductObjectPlatePrices').find('div', 'EBI4ProductObjectPlatePriceSale').text).strip()[:-5].replace(" ", ""))
                 availability=str(el.find('div', 'EBI4ProductObjectButtonCompare').find('a').text).strip().lower()
                 for prod in self.product:
                     if prod in prodInfo and availability != "prece nav noliktavā":
-                        print("Found " + prod)
-                        found=True
-                        link=str(el.find('div', 'EBI4ProductObjectPlateTitle').find('a')['href']).strip()
-                        link="https://www.balticdata.lv"+link
-                        msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
-                        self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
+                        if price>self.max_price:
+                            self.log("Too expensive: " + prodInfo + " for " + str(price))
+                        else:
+                            print("Found " + prod + ' ' +  str(price))
+                            found=True
+                            link=str(el.find('div', 'EBI4ProductObjectPlateTitle').find('a')['href']).strip()
+                            link="https://www.balticdata.lv"+link
+                            msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
+                            self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
                 #print(prodInfo + ' ' + str(price))
 
             except Exception as e:
