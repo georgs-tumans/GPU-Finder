@@ -164,7 +164,7 @@ class GpuFinder(scrapy.Spider):
                         msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
                         self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                    
-                print(prodInfo + ' ' + price + ' ' + link)
+                #print(prodInfo + ' ' + price + ' ' + link)
 
             except Exception as e:
                 self.log(content="Failed to process a search result: " + str(e), isError=1)
@@ -291,7 +291,10 @@ class GpuFinder(scrapy.Spider):
 
         for el in resListElements:
             try:
-                prodInfo=str(el.find('p', 'product-name').text).strip()
+                el = el.find('p', 'product-name')
+                if el == None:          #fix situācijai, kad 220 ieliek reklāmu starp rezultātiem
+                    continue
+                prodInfo=str(el.text).strip()
                 available=el.find('span', 'label-soldout')
                 for prod in self.product:
                     if prod in prodInfo and available == None:
