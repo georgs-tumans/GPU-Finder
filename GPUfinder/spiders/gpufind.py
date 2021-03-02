@@ -199,16 +199,19 @@ class GpuFinder(scrapy.Spider):
         for r in results:
             try:
                 title=r["title"]
+                price=r["priceDefault"]
                 for prod in self.product:
                     #specifiska atlase, jo 1A pārdod cooling produktus konkrētajai videokartei, kas nav vajadzīgi
                     if prod in title and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True:
-                        url=r["url"]
-                        url="https://www.1a.lv"+url
-                        price=r["priceDefault"]
-                        print(title + " " + str(price) + " " + url)
-                        self.log("Found the product " + title + " for " + str(price) + ". Available: " + url + ". Sending email..")
-                        msgText=msgText + title + "\nSaite: "+ url + "\nCena: " + str(price) + "\n\n"   
-                        found=True
+                        if int(price)>self.max_price:
+                            self.log("Too expensive: " + prod + " for " + str(price))
+                        else:
+                            url=r["url"]
+                            url="https://www.1a.lv"+url
+                            print(title + " " + str(price) + " " + url)
+                            self.log("Found the product " + title + " for " + str(price) + ". Available: " + url + ". Sending email..")
+                            msgText=msgText + title + "\nSaite: "+ url + "\nCena: " + str(price) + "\n\n"   
+                            found=True
                 #print(title)
 
             except Exception as e:
