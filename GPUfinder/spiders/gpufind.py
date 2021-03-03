@@ -29,6 +29,7 @@ class GpuFinder(scrapy.Spider):
     sender_email = cfg['sender_email']
     receiver_email = cfg['receiver_email']
     max_price = cfg['max_price']
+    pattern = re.compile(r'\s+')
 
 #########################################  Utilieties #######################################################
     def SendEmail(self, msgText, type=0):   #type=0 - informācija par atrastu preci/type=1 - info par kļūdām
@@ -83,18 +84,22 @@ class GpuFinder(scrapy.Spider):
             "https://www.rdveikals.lv/search/lv/word/rx+5600/page/1/",
             "https://www.rdveikals.lv/search/lv/word/rtx+3060/page/1/",
             "https://www.rdveikals.lv/search/lv/word/rx+6700/page/1/",
+            "https://www.rdveikals.lv/search/lv/word/rtx+2070/page/1/filters/417_0_0/",
             'https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*',
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205600&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rtx%203060&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%206700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
+            "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rtx%202070&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             "https://www.dateks.lv/meklet?q=rx%205700",
             "https://www.dateks.lv/meklet?q=rx%205600",
             "https://www.dateks.lv/meklet?q=rtx%203060",
             "https://www.dateks.lv/meklet?q=rx%206700",
+            "https://www.dateks.lv/meklet?q=rtx%202070",
             "https://220.lv/lv/datortehnika/datoru-komponentes/videokartes-gpu",
             "https://oreol.eu/search/?search=5700%20xt&description=true",
             "https://oreol.eu/search/?search=rtx%203060&description=true",
             "https://oreol.eu/search/?search=rx%206700&description=true",
+            "https://oreol.eu/search/?search=rtx%202070&category_id=54&description=true",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/2",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/3",
@@ -155,14 +160,17 @@ class GpuFinder(scrapy.Spider):
                 prodInfo=str(el.find('div', 'product__info__part').find('h3', 'product__title').find('a').text).strip()
                 link=str(el.find('div', 'product__info__part').find('h3', 'product__title').find('a')['href']).strip()
                 link="https://www.rdveikals.lv/"+link
-                price=str(el.find('p', 'price').text).strip()
+                price=re.sub(self.pattern, '', str(el.find('p', 'price').text).strip()[:-5])
                 for prod in self.product:
                     #meklēšanas rezultāti satur vajadzīgo preci  - izvelkam saiti, cenu un sūtam epastu ar info:
                     if prod in prodInfo and "portatīvais" not in link.lower():
-                        print("Found the product!")
-                        found=True
-                        msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
-                        self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
+                        if int(price)>self.max_price:
+                            self.log("Too expensive: " + prodInfo + " for " + str(price))
+                        else:
+                            print("Found the product!")
+                            found=True
+                            msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + price + "\n\n"
+                            self.log("Found the product " + prodInfo + " for " + price + ". Available: " + link + ". Sending email..")
                    
                 #print(prodInfo + ' ' + price + ' ' + link)
 
@@ -243,13 +251,12 @@ class GpuFinder(scrapy.Spider):
         
         found=False
         msgText="Veikalā Dateks tika atrastas sekojošas preces:\n\n"
-        pattern = re.compile(r'\s+')
 
         for el in resListElements:
             try:
                 prodInfo=str(el.find('div', 'name').text).strip()
                 link=str(el.find('div', 'top').find('a')['href']).strip()
-                price=re.sub(pattern, '',str(el.find('div', 'mid').find('div', 'price').text).strip()[:-5])
+                price=re.sub(self.pattern, '',str(el.find('div', 'mid').find('div', 'price').text).strip()[:-5])
                 for prod in self.product:
                     if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower() and "portativie-datori" not in link.lower() and "datorkomplekti" not in link.lower():
                         if int(price)>self.max_price:
