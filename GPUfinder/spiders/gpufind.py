@@ -251,7 +251,7 @@ class GpuFinder(scrapy.Spider):
                 link=str(el.find('div', 'top').find('a')['href']).strip()
                 price=re.sub(pattern, '',str(el.find('div', 'mid').find('div', 'price').text).strip()[:-5])
                 for prod in self.product:
-                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower() and "portativie-datori" not in link.lower():
+                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower() and "portativie-datori" not in link.lower() and "datorkomplekti" not in link.lower():
                         if int(price)>self.max_price:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
