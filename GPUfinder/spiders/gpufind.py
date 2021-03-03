@@ -85,21 +85,29 @@ class GpuFinder(scrapy.Spider):
             "https://www.rdveikals.lv/search/lv/word/rtx+3060/page/1/",
             "https://www.rdveikals.lv/search/lv/word/rx+6700/page/1/",
             "https://www.rdveikals.lv/search/lv/word/rtx+2070/page/1/filters/417_0_0/",
+            "https://www.rdveikals.lv/search/lv/word/rtx+2080/page/1/filters/417_0_0/",
+            "https://www.rdveikals.lv/search/lv/word/rtx+3070/page/1/filters/417_0_0/",
             'https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*',
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%205600&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rtx%203060&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rx%206700&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rtx%202070&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
+            "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rtx+2080&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
+            "https://sb.searchnode.net/v1/query/docs?query_key=qJCQ7AEn9cNmcFozKKFfSJVXf90mtDD2&search_query=rtx+3070&sort.0=-inStock&sort.1=-score&offset=0&limit=48&facets.0=attr_*",
             "https://www.dateks.lv/meklet?q=rx%205700",
             "https://www.dateks.lv/meklet?q=rx%205600",
             "https://www.dateks.lv/meklet?q=rtx%203060",
             "https://www.dateks.lv/meklet?q=rx%206700",
             "https://www.dateks.lv/meklet?q=rtx%202070",
+            "https://www.dateks.lv/meklet?q=rtx%202080",
+            "https://www.dateks.lv/meklet?q=rtx%203070",
             "https://220.lv/lv/datortehnika/datoru-komponentes/videokartes-gpu",
             "https://oreol.eu/search/?search=5700%20xt&description=true",
             "https://oreol.eu/search/?search=rtx%203060&description=true",
             "https://oreol.eu/search/?search=rx%206700&description=true",
             "https://oreol.eu/search/?search=rtx%202070&category_id=54&description=true",
+            "https://oreol.eu/search/?search=rtx%203070&category_id=54&description=true",
+            "https://oreol.eu/search/?search=rtx%202080&category_id=54&description=true",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/2",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/3",
@@ -210,7 +218,7 @@ class GpuFinder(scrapy.Spider):
                 price=r["priceDefault"]
                 for prod in self.product:
                     #specifiska atlase, jo 1A pārdod cooling produktus konkrētajai videokartei, kas nav vajadzīgi
-                    if prod in title and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True:
+                    if prod in title and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True and "backplate" not in title.lower() and "alphacool" not in title.lower() and "aqua" not in title.lower():
                         if int(price)>self.max_price:
                             self.log("Too expensive: " + prod + " for " + str(price))
                         else:
