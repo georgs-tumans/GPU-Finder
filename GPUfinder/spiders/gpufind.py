@@ -112,7 +112,8 @@ class GpuFinder(scrapy.Spider):
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/2",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/3",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/4",
-            "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/5"
+            "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/5",
+            "https://www.elkor.lv/lat/datori-1/datoru-komponentes/videokartes/?page=1&price=300-800"
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)    
@@ -131,6 +132,8 @@ class GpuFinder(scrapy.Spider):
             self.processOreol(response)
         elif "balticdata" in str(response.url):
             self.processBalticdata(response)
+        elif "elkor" in str(response.url):
+            self.processElkor(response)
         return
         
     
@@ -420,6 +423,53 @@ class GpuFinder(scrapy.Spider):
                             msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
                             self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
                 #print(prodInfo + ' ' + str(price))
+
+            except Exception as e:
+                self.log(content="Failed to process a search result: " + str(e), isError=1)
+                pass
+
+        if found == False:
+            self.log("Didn't find the product")
+        else:
+            self.SendEmail(msgText, 0)
+
+    def processElkor(self, response):
+        responseData=str(response.text)
+        self.log("Processing Elkor")
+        try:
+            soup = BeautifulSoup(str(responseData), 'html.parser')
+        except Exception as e:
+            print("Error parsing the page")
+            self.log(content="Error parsing the page: " + str(e), isError=1)
+
+        try:
+            resListElements = soup.find('div', 'products-list').find_all('div', 'product')
+            if resListElements == None or resListElements==[]:
+                self.log('No search results')
+                return
+        except Exception as e:
+            print("Failed to parse the search results")
+            self.log(content="Failed to parse the search results" + str(e),  isError=1)
+        
+        found=False
+        msgText="Veikalā Elkor tika atrastas sekojošas preces:\n\n"
+
+        for el in resListElements:
+            try:
+                prodInfo=str(el.find('h2', 'product-name').text).strip()[11:]
+                price=int(str(el.find('span', 'current-price').text).strip()[:-3].replace(" ", "")[3:])
+                link=str(el.find('a', 'product-link')['href']).strip()
+                link="https://www.elkor.lv"+link
+                for prod in self.product:
+                    if prod in prodInfo:
+                        if price>self.max_price:
+                            self.log("Too expensive: " + prodInfo + " for " + str(price))
+                        else:
+                            print("Found " + prod + ' ' +  str(price))
+                            found=True
+                            msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
+                            self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
+                #print(prodInfo + ' ' + str(price) + ' ' + link)
 
             except Exception as e:
                 self.log(content="Failed to process a search result: " + str(e), isError=1)
