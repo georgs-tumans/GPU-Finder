@@ -223,7 +223,7 @@ class GpuFinder(scrapy.Spider):
                     #specifiska atlase, jo 1A pārdod cooling produktus konkrētajai videokartei, kas nav vajadzīgi
                     if prod in title and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True and "backplate" not in title.lower() and "alphacool" not in title.lower() and "aqua" not in title.lower():
                         if int(price)>self.max_price:
-                            self.log("Too expensive: " + prod + " for " + str(price))
+                            self.log("Too expensive: " + title + " for " + str(price))
                         else:
                             url=r["url"]
                             url="https://www.1a.lv"+url
@@ -457,7 +457,7 @@ class GpuFinder(scrapy.Spider):
         for el in resListElements:
             try:
                 prodInfo=str(el.find('h2', 'product-name').text).strip()[11:]
-                price=int(str(el.find('span', 'current-price').text).strip()[:-3].replace(" ", "")[3:])
+                price=int(str(el.find('span', 'current-price').text).strip().replace(" ", "").replace("EUR", "")[:-3])
                 link=str(el.find('a', 'product-link')['href']).strip()
                 link="https://www.elkor.lv"+link
                 for prod in self.product:
