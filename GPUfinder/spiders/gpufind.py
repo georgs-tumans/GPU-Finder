@@ -10,6 +10,7 @@ from datetime import datetime
 import json
 import pprint
 import re
+import os
 
 #ToDO
 # 1. Add other websites
@@ -54,8 +55,12 @@ class GpuFinder(scrapy.Spider):
 
     def log(self, content, newRun=0, isError=0): 
         todayDate=str(date.today().strftime("%Y.%m.%d"))
+        currentMonth=str(date.today().strftime("%Y-%m"))
+        baseLocation="GPUfinder/logs/" + currentMonth + "/"
         currentTime=str(datetime.now().strftime("%H:%M:%S"))
-        with open("GPUfinder/logs/" + todayDate + "-log.txt", "a", encoding="utf-8") as fout:
+        if os.path.isdir(baseLocation)==False:
+            os.mkdir(baseLocation) 
+        with open(baseLocation + todayDate + "-log.txt", "a", encoding="utf-8") as fout:
             if newRun==1:
                 fout.write("\n\n")
             fout.write(currentTime +"  " + content + "\n")
@@ -175,7 +180,7 @@ class GpuFinder(scrapy.Spider):
                 for prod in self.product:
                     #meklēšanas rezultāti satur vajadzīgo preci  - izvelkam saiti, cenu un sūtam epastu ar info:
                     if prod in prodInfo and "portatīvais" not in link.lower():
-                        if int(price)>self.max_price:
+                        if int(price)>self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
                             print("Found the product!")
@@ -222,7 +227,7 @@ class GpuFinder(scrapy.Spider):
                 for prod in self.product:
                     #specifiska atlase, jo 1A pārdod cooling produktus konkrētajai videokartei, kas nav vajadzīgi
                     if prod in title and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True and "backplate" not in title.lower() and "alphacool" not in title.lower() and "aqua" not in title.lower():
-                        if int(price)>self.max_price:
+                        if int(price)>self.max_price[prod]:
                             self.log("Too expensive: " + title + " for " + str(price))
                         else:
                             url=r["url"]
@@ -270,7 +275,7 @@ class GpuFinder(scrapy.Spider):
                 price=re.sub(self.pattern, '',str(el.find('div', 'mid').find('div', 'price').text).strip()[:-5])
                 for prod in self.product:
                     if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower() and "portativie-datori" not in link.lower() and "datorkomplekti" not in link.lower():
-                        if int(price)>self.max_price:
+                        if int(price)>self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
                             print("Found " + prod)
@@ -365,7 +370,7 @@ class GpuFinder(scrapy.Spider):
                 price=int(str(el.find('div', 'caption').find('p', 'price').text).strip()[:-4].replace(" ", ""))
                 for prod in self.product:
                     if prod in prodInfo and "microsd" not in prodInfo.lower():
-                        if price > self.max_price:
+                        if price > self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
                             print("Found " + prod)
@@ -413,7 +418,7 @@ class GpuFinder(scrapy.Spider):
                 availability=str(el.find('div', 'EBI4ProductObjectButtonCompare').find('a').text).strip().lower()
                 for prod in self.product:
                     if prod in prodInfo and availability != "prece nav noliktavā":
-                        if price>self.max_price:
+                        if price>self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
                             print("Found " + prod + ' ' +  str(price))
@@ -462,7 +467,7 @@ class GpuFinder(scrapy.Spider):
                 link="https://www.elkor.lv"+link
                 for prod in self.product:
                     if prod in prodInfo:
-                        if price>self.max_price:
+                        if price>self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
                             print("Found " + prod + ' ' +  str(price))
