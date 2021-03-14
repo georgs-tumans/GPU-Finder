@@ -223,7 +223,11 @@ class GpuFinder(scrapy.Spider):
         for r in results:
             try:
                 title=r["title"]
-                price=r["priceDefault"]
+                #On same rare occasions this field might be absent from the json
+                try:
+                    price=r["priceDefault"]
+                except Exception:
+                    continue
                 for prod in self.product:
                     #specifiska atlase, jo 1A pārdod cooling produktus konkrētajai videokartei, kas nav vajadzīgi
                     if prod in title and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True and "backplate" not in title.lower() and "alphacool" not in title.lower() and "aqua" not in title.lower():
@@ -239,7 +243,7 @@ class GpuFinder(scrapy.Spider):
                 #print(title)
 
             except Exception as e:
-                self.log(content="Failed to process a search result: " + str(e), isError=1)
+                self.log(content="Failed to process a search result: " + str(e) + ' ' + title, isError=1)
                 pass
 
         if found == False:
