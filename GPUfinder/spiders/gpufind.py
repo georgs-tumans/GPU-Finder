@@ -118,7 +118,13 @@ class GpuFinder(scrapy.Spider):
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/3",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/4",
             "https://www.balticdata.lv/lv/datoru-komponentes/videokartes/5",
-            "https://www.elkor.lv/lat/datori-1/datoru-komponentes/videokartes/?page=1&price=300-800"
+            "https://www.elkor.lv/lat/datori-1/datoru-komponentes/videokartes/?page=1&price=300-800",
+            "https://m79.lv/meklet/rtx-3060",
+            "https://m79.lv/meklet/5700-xt",
+            "https://m79.lv/meklet/6700-xt",
+            "https://m79.lv/meklet/rtx-2070",
+            "https://m79.lv/meklet/rtx-2080",
+            "https://m79.lv/meklet/rtx-3070"
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)    
@@ -139,6 +145,8 @@ class GpuFinder(scrapy.Spider):
             self.processBalticdata(response)
         elif "elkor" in str(response.url):
             self.processElkor(response)
+        elif "m79" in str(response.url):
+            self.processM79(response)
         return
         
     
@@ -179,7 +187,7 @@ class GpuFinder(scrapy.Spider):
                 price=re.sub(self.pattern, '', str(el.find('p', 'price').text).strip()[:-5])
                 for prod in self.product:
                     #meklēšanas rezultāti satur vajadzīgo preci  - izvelkam saiti, cenu un sūtam epastu ar info:
-                    if prod in prodInfo and "portatīvais" not in link.lower():
+                    if prod in prodInfo.lower() and "portatīvais" not in link.lower():
                         if int(price)>self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
@@ -230,7 +238,7 @@ class GpuFinder(scrapy.Spider):
                     continue
                 for prod in self.product:
                     #specifiska atlase, jo 1A pārdod cooling produktus konkrētajai videokartei, kas nav vajadzīgi
-                    if prod in title and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True and "backplate" not in title.lower() and "alphacool" not in title.lower() and "aqua" not in title.lower():
+                    if prod in title.lower() and "water" not in title.lower() and "samos" not in title.lower() and r["inStock"] == True and "backplate" not in title.lower() and "alphacool" not in title.lower() and "aqua" not in title.lower():
                         if int(price)>self.max_price[prod]:
                             self.log("Too expensive: " + title + " for " + str(price))
                         else:
@@ -278,7 +286,7 @@ class GpuFinder(scrapy.Spider):
                 link=str(el.find('div', 'top').find('a')['href']).strip()
                 price=re.sub(self.pattern, '',str(el.find('div', 'mid').find('div', 'price').text).strip()[:-5])
                 for prod in self.product:
-                    if prod in prodInfo and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower() and "portativie-datori" not in link.lower() and "datorkomplekti" not in link.lower() and "custom-loop" not in link.lower():
+                    if prod in prodInfo.lower() and "water" not in prodInfo.lower() and "ryzen" not in prodInfo.lower() and "coolers" not in link.lower() and "personalie-datori" not in link.lower() and "portativie-datori" not in link.lower() and "datorkomplekti" not in link.lower() and "custom-loop" not in link.lower():
                         if int(price)>self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
@@ -327,7 +335,7 @@ class GpuFinder(scrapy.Spider):
                 prodInfo=str(el.text).strip()
                 available=el.find('span', 'label-soldout')
                 for prod in self.product:
-                    if prod in prodInfo and available == None:
+                    if prod in prodInfo.lower() and available == None:
                         print("Found " + prod)
                         found=True
                         link=str(el.find('p', 'product-name').find('a')['href']).strip()
@@ -373,7 +381,7 @@ class GpuFinder(scrapy.Spider):
                 prodInfo=str(el.find('div', 'caption').find('a').text).strip()
                 price=int(str(el.find('div', 'caption').find('p', 'price').text).strip()[:-4].replace(" ", ""))
                 for prod in self.product:
-                    if prod in prodInfo and "microsd" not in prodInfo.lower():
+                    if prod in prodInfo.lower() and "microsd" not in prodInfo.lower():
                         if price > self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
@@ -421,7 +429,7 @@ class GpuFinder(scrapy.Spider):
                 price=int(str(el.find('div', 'EBI4ProductObjectPlatePrices').find('div', 'EBI4ProductObjectPlatePriceSale').text).strip()[:-5].replace(" ", ""))
                 availability=str(el.find('div', 'EBI4ProductObjectButtonCompare').find('a').text).strip().lower()
                 for prod in self.product:
-                    if prod in prodInfo and availability != "prece nav noliktavā":
+                    if prod in prodInfo.lower() and availability != "prece nav noliktavā":
                         if price>self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:
@@ -470,7 +478,53 @@ class GpuFinder(scrapy.Spider):
                 link=str(el.find('a', 'product-link')['href']).strip()
                 link="https://www.elkor.lv"+link
                 for prod in self.product:
-                    if prod in prodInfo:
+                    if prod in prodInfo.lower():
+                        if price>self.max_price[prod]:
+                            self.log("Too expensive: " + prodInfo + " for " + str(price))
+                        else:
+                            print("Found " + prod + ' ' +  str(price))
+                            found=True
+                            msgText=msgText + prodInfo + "\nSaite: "+ link + "\nCena: " + str(price) + "\n\n"
+                            self.log("Found the product " + prodInfo + " for " + str(price) + ". Available: " + link + ". Sending email..")
+                #print(prodInfo + ' ' + str(price) + ' ' + link)
+
+            except Exception as e:
+                self.log(content="Failed to process a search result: " + str(e), isError=1)
+                pass
+
+        if found == False:
+            self.log("Didn't find the product")
+        else:
+            self.SendEmail(msgText, 0)
+
+    def processM79(self, response):
+        responseData=str(response.text)
+        self.log("Processing M79")
+        try:
+            soup = BeautifulSoup(str(responseData), 'html.parser')
+        except Exception as e:
+            print("Error parsing the page")
+            self.log(content="Error parsing the page: " + str(e), isError=1)
+
+        try:
+            resListElements = soup.find('div', 'items search-results').find_all('div', 'item')
+            if resListElements == None or resListElements==[]:
+                self.log('No search results')
+                return
+        except Exception as e:
+            print("Failed to parse the search results")
+            self.log(content="Failed to parse the search results" + str(e),  isError=1)
+        
+        found=False
+        msgText="Veikalā M79 tika atrastas sekojošas preces:\n\n"
+
+        for el in resListElements:
+            try:
+                prodInfo=str(el.find('h3').find('a').text).strip()
+                price=int(str(el.find('div', 'price').find('b').text).strip().replace(" ", "")[:-3])
+                link=str(el.find('h3').find('a')['href']).strip()
+                for prod in self.product:
+                    if prod in prodInfo.lower() and "udensdzesesanassistemas" not in link.lower() and "ventilatori" not in link.lower() and "backplate" not in prodInfo.lower() and "portativiedatori" not in link.lower() and "personaliedatori" not in link.lower():
                         if price>self.max_price[prod]:
                             self.log("Too expensive: " + prodInfo + " for " + str(price))
                         else:

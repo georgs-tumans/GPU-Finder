@@ -20,3 +20,13 @@ To use the project, following modules have to be installed through pip:
 * https://docs.scrapy.org/en/latest/index.html
 * https://pyyaml.org/
 * https://www.crummy.com/software/BeautifulSoup/
+
+## Supported stores:
+* 1a.lv
+* rdveikals.lv
+* dateks.lv
+* 220.lv
+* m79.lv
+* oreol.eu
+* balticdata.lv
+* elkor.lv
