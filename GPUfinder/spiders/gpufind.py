@@ -44,14 +44,14 @@ class GpuFinder(scrapy.Spider):
         message["To"] = self.receiver_email
         message.attach(MIMEText(msgText, "plain"))
 
-        try:
-            # Create a secure SSL context
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(self.smtp_server, self.port, context=context) as server:
-                server.login(self.sender_email, self.password)
-                server.sendmail(self.sender_email, self.receiver_email, message.as_string())
-        except Exception as e:
-            self.log("Failed to send an email: " + str(e))
+        # try:
+        #     # Create a secure SSL context
+        #     context = ssl.create_default_context()
+        #     with smtplib.SMTP_SSL(self.smtp_server, self.port, context=context) as server:
+        #         server.login(self.sender_email, self.password)
+        #         server.sendmail(self.sender_email, self.receiver_email, message.as_string())
+        # except Exception as e:
+        #     self.log("Failed to send an email: " + str(e))
 
     def log(self, content, newRun=0, isError=0): 
         todayDate=str(date.today().strftime("%Y.%m.%d"))
